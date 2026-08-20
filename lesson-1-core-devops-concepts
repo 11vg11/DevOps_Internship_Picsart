@@ -1,1 +1,172 @@
+# DevOps / SRE / Web Architecture Assignment
 
+## Section 1 — DevOps: Why? (8 pts)
+
+### 1.1 The problem DevOps was invented to solve (3 pts)
+
+Historically, the people who wrote software and the people who ran it in production were separate teams with conflicting incentives: developers were rewarded for shipping new features fast, while operations was rewarded for keeping systems stable, so operations resisted change and developers threw code "over the wall" without owning what happened to it in production. This split created long handoff delays, finger-pointing when things broke, and infrequent, high-risk releases because nobody had end-to-end responsibility for getting working software into users' hands quickly and safely. DevOps was invented to close that gap by giving teams shared tools, automation, and accountability across the whole software lifecycle, from writing code to running it live.
+
+### 1.2 Quarterly, weekend-long releases with a 33% rollback rate (3 pts)
+
+**(a) Business problems:**
+1. Slow time-to-market — features and fixes sit unreleased for up to 4 months, so the company can't respond to customers or competitors quickly.
+2. Revenue/reputation risk — a 1-in-3 rollback rate means customers regularly hit broken functionality or outages right after release, damaging trust.
+3. High opportunity cost — deployments require dedicating a whole weekend (often with overtime pay or on-call costs), which is expensive and hard to schedule around other business needs.
+
+**(b) Engineering problems:**
+1. Burnout — weekend, high-pressure release windows are exhausting and unsustainable, especially when they recur every few months.
+2. Large, risky batches — 4 months of changes get bundled into one release, making it very hard to isolate which change caused a failure when a rollback happens.
+3. Atrophied release skills — because releases are rare, the process stays manual and error-prone; the team never gets enough repetitions to build confidence, tooling, or muscle memory around deploying safely.
+
+### 1.3 True/False (2 pts)
+
+| # | Statement | T/F | Why |
+|---|-----------|-----|-----|
+| a | DevOps means "developers do operations work too." | False | DevOps is about shared ownership and collaboration across the lifecycle, not literally merging job functions into one person's task list. |
+| b | If you have a CI/CD pipeline, you are doing DevOps. | False | CI/CD is a tool/practice that supports DevOps, but DevOps also requires the collaboration, feedback loops, and shared responsibility around that pipeline — a pipeline alone doesn't guarantee those exist. |
+| c | DevOps aims to make deployments boring. | True | The goal is frequent, small, low-risk, automated, predictable releases — "boring" in the sense of routine and low-drama rather than rare, high-stakes events. |
+| d | DevOps is a job title. | False | DevOps is a set of practices/principles; "DevOps Engineer" as a title exists in industry, but it's a loose label for someone working on these practices, not what DevOps itself refers to. |
+
+---
+
+## Section 2 — The DevOps Profession (8 pts)
+
+### 2.1 Table (4 pts)
+
+| Role | Main goal | One daily task | One tool |
+|---|---|---|---|
+| DevOps Engineer | Speed up and automate the path from code to production | Fixing/improving a CI/CD pipeline step | Jenkins / GitHub Actions |
+| SRE | Keep production reliable within agreed error budgets | Reviewing alerts/dashboards and on-call triage | Prometheus / Grafana |
+| Sysadmin | Keep servers and infrastructure running day-to-day | Patching servers, managing user accounts/permissions | Ansible / Bash |
+| Platform Engineer | Build internal tools/platforms so other devs can self-serve | Improving an internal developer platform (IDP) or golden path template | Backstage / Terraform |
+
+### 2.2 Five specific skills to work on (3 pts)
+
+1. Writing a systemd unit file from scratch (and using `systemctl` to manage it).
+2. Writing a multi-stage Dockerfile that minimizes final image size.
+3. Writing a GitHub Actions/GitLab CI YAML pipeline with build, test, and deploy stages.
+4. Writing a Terraform module to provision a VPC + EC2 instance from scratch.
+5. Writing a bash script that handles `set -euo pipefail`, argument parsing, and error trapping properly.
+
+### 2.3 Not responsible for (1 pt)
+
+A DevOps engineer is not responsible for writing the business logic/features of the application — that's owned by the software development team (product engineers).
+
+---
+
+## Section 3 — SRE: SLA / SLO / SLI and Incidents (14 pts)
+
+### 3.1 Definitions and order (3 pts)
+
+- **SLI** (Service Level Indicator): an actual measured metric of a service's behavior, e.g. the percentage of successful requests.
+- **SLO** (Service Level Objective): an internal target value for an SLI that the team aims to meet, e.g. "99.9% of requests succeed."
+- **SLA** (Service Level Agreement): a contractual promise to a customer about service performance, usually with financial or legal penalties if missed.
+
+**Order (internal target → legal promise): SLI → SLO → SLA**
+
+### 3.2 Allowed downtime for 99.9% SLA (2 pts)
+
+```
+30 days × 24 hours × 60 minutes = 43,200 minutes/month
+Allowed downtime = 43,200 × (1 − 0.999) = 43,200 × 0.001 = 43.2 minutes/month
+```
+
+### 3.3 Table (2 pts)
+
+| Uptime | Allowed downtime / month |
+|---|---|
+| 99% | 43,200 × 0.01 = 432 minutes (~7.2 hours) |
+| 99.9% | 43,200 × 0.001 = 43.2 minutes |
+| 99.99% | 43,200 × 0.0001 = 4.32 minutes |
+
+### 3.4 Error budget (3 pts)
+
+An error budget is the amount of unreliability you're allowed to "spend" in a period while still meeting your SLO — it's 100% minus your SLO target, converted into actual downtime/error minutes you can afford. It reframes reliability as a resource you consume, not just a pass/fail metric.
+
+With 90% of the monthly budget already gone by day 12 (less than halfway through the month), I would tell the developer: **not today**. Shipping a risky refactor now sharply increases the chance of blowing through the remaining budget, which would breach the SLO/SLA. I'd ask them to hold the refactor until the budget resets (or ship it behind a feature flag with a controlled rollout), and instead prioritize stability work for the rest of the month.
+
+### 3.5 Incident timeline — checkout 500s at 03:12 (3 pts)
+
+1. **03:12** — Alert fires (5xx rate spike on checkout); I acknowledge the page within a couple minutes so it doesn't escalate further.
+2. **03:14** — Open the incident channel/tool, declare an incident, and post a first status line: "Investigating checkout 500s, started ~03:12."
+3. **03:15** — Check recent deploys/changes (deploy log, config changes) to see if this correlates with a release.
+4. **03:17** — Check dashboards/logs (error rate, latency, dependency health — DB, payment gateway) to narrow down the failing component.
+5. **03:20** — Notify the on-call lead/team in the incident channel and pull in the checkout service owner if I can't resolve it alone.
+6. **03:22** — Decide: if a recent deploy correlates with the spike, **roll back** immediately (fast, low-risk, buys time); only **fix forward** if the cause is external (e.g. a third-party outage) or a rollback isn't possible.
+7. **03:25–03:27** — Execute the rollback (or forward fix), verify error rate drops, and log every action with timestamps in the incident doc/channel as it happens (not after the fact).
+
+### 3.6 Blameless postmortem (1 pt)
+
+A blameless postmortem is a written incident review that focuses on what happened in the systems and processes that allowed the failure, not on punishing the individual(s) involved — the goal is learning and prevention. Two things that must never appear: (1) naming/blaming an individual for "causing" the incident, and (2) language implying disciplinary consequences or fault-finding ("X should have known better").
+
+---
+
+## Section 4 — CSR vs SSR (10 pts)
+
+### 4.1 Table (4 pts)
+
+| | CSR | SSR |
+|---|---|---|
+| First paint speed on slow phone | slow — blank page until JS downloads/parses/executes |  fast — HTML arrives already rendered |
+| SEO out of the box |  crawlers may see an empty shell unless JS is executed |  full content is in the initial HTML |
+| Server CPU cost |  low — server just serves static JS/assets |  higher — server renders HTML per request |
+| Works with a static host (no server) |  yes — just static files |  no — needs a running server/runtime |
+
+### 4.2 Product choices (3 pts)
+
+a) **News site on Google traffic → SSR** (or SSG) — SEO and fast first paint matter enormously for organic search traffic and indexing.
+
+b) **Internal admin dashboard behind login → CSR** — no SEO need, content is private, and interactivity/dev speed matter more than initial paint.
+
+c) **Marketing landing page with contact form → SSR/SSG** — it needs to be indexable and load instantly for conversion, with the form as a small interactive island.
+
+### 4.3 Where SSG fits (2 pts)
+
+SSG sits between CSR and SSR: like SSR, it produces fully-formed HTML that's fast to paint and good for SEO, but instead of rendering on every request it renders once at build time and serves the result as static files — like CSR's static-host deployment model. This gives you SSR's speed/SEO benefits with CSR's near-zero server cost and easy hosting, at the cost of the content being only as fresh as the last build (not suited to highly dynamic, per-user, or frequently changing content).
+
+### 4.4 View source exercise (1 pt)
+
+*(Fill in after doing the exercise yourself)*
+
+- **URL tested:**
+- **CSR or SSR:**
+- **Evidence in the HTML:** e.g. if the `<body>` is mostly empty (just a `<div id="root">` or `<div id="__next">`) with large JS bundle `<script>` tags, that's CSR — content is injected by JavaScript after load. If the `<body>` already contains the full visible text/content in the raw HTML, that's SSR (or SSG).
+
+---
+
+## Section 5 — Cloudflare & Cloudflare Pages (10 pts)
+
+### 5.1 What a CDN does (2 pts)
+
+A CDN caches copies of content on servers ("edge nodes") distributed around the world, so users get content from a nearby server instead of the origin. Example: an image is hosted on a server in Virginia; without a CDN, a user in Yerevan's request has to travel across the Atlantic and back (high latency, ~150–200ms+ round trip). With a CDN, the first Yerevan request pulls the image from Virginia and caches it at a nearby edge node (e.g. in Europe or the Caucasus region); every subsequent request from users near Yerevan is served from that nearby cache, cutting latency dramatically and reducing load on the Virginia origin server.
+
+### 5.2 Match features (3 pts)
+
+| Feature | What it does |
+|---|---|
+| DNS | Resolves domain names to IP addresses; Cloudflare hosts and serves your DNS records |
+| Proxy (orange cloud) | Routes traffic through Cloudflare's network, hiding your origin IP and enabling other features (WAF, cache, etc.) |
+| WAF | Filters/blocks malicious HTTP requests (SQLi, XSS, bad bots) before they reach your server |
+| Cloudflare Pages | Hosts and deploys static/JAMstack sites directly from a git repo, with builds and previews |
+| Cloudflare Workers | Runs serverless JavaScript/WASM code at the edge, close to users |
+| Cache | Stores copies of content at edge locations so repeat requests don't hit your origin server |
+
+### 5.3 Orange vs grey cloud (2 pts)
+
+Orange cloud (proxied) means traffic to that DNS record routes through Cloudflare's network, getting caching, WAF, DDoS protection, and IP-hiding. Grey cloud (DNS only) means Cloudflare just resolves the domain to an IP, but traffic goes directly to your origin server with none of Cloudflare's protection/caching applied.
+
+You'd deliberately choose grey cloud for something like a **mail server record (e.g. an MX-related A record, or an SSH/admin subdomain)**, where you need direct protocol-level access (not HTTP) or must expose the real origin IP for the service to work correctly.
+
+### 5.4 Cloudflare Pages vs $5 VPS + Nginx (2 pts)
+
+**Cloudflare Pages advantages:**
+1. Free global CDN distribution and automatic HTTPS, with zero server maintenance (no patching, no uptime babysitting).
+2. Built-in CI/CD from git — push to deploy, plus automatic preview deployments per branch/PR.
+
+**VPS + Nginx advantages:**
+1. Full control — you can run any backend, cron jobs, or custom server-side logic, not just static files.
+2. No vendor platform limits (build minutes, request quotas, feature gating) — you configure Nginx however you want.
+
+### 5.5 Preview deployment (1 pt)
+
+A Cloudflare Pages preview deployment is an automatically generated, unique URL for each branch/pull-request build, separate from production. It's useful in a team because reviewers, QA, and stakeholders can see and test a change live before it's merged and deployed to production, catching issues early without affecting real users.
