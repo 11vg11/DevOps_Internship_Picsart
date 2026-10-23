@@ -8,6 +8,8 @@ Infrastructure as Code (IaC) manages infrastructure through versioned, reviewabl
 
 Terraform configurations combine providers, resources, data sources, variables, locals, outputs, modules, and state. A dependency graph determines operation order. State maps configuration objects to real objects and can contain sensitive values.
 
+For a hands-on AWS example, see the [beginner project for monthly budget alerts](./budget-alerts/README.md). It creates an alerting budget; it does not cap spend or stop resources.
+
 ## 3. How it works
 
 Terraform initializes providers/modules, reads configuration and state, refreshes remote objects as needed, calculates a plan, and applies approved operations. Configuration and state serve different purposes: configuration describes desired intent; state tracks managed object identity and attributes.
@@ -69,6 +71,7 @@ Provider version constraints are illustrative; select and test a supported versi
 2. Provide a Region through an untracked local variable file, then run `terraform init`, `terraform fmt -check`, and `terraform validate`.
 3. If authorized, run `terraform plan` and confirm it has no managed resource creation. Remove local `.terraform` and state files only after confirming they are from this exercise; no cloud resource should be created.
 4. Review the detailed guides for [IaC](./iac-fundamentals.md), [approaches](./imperative-vs-declarative.md), [providers and variables](./providers-variables.md), [state](./state-and-backend.md), and [modules](./modules.md).
+5. If you have an authorized AWS account, follow the [budget-alerts project](./budget-alerts/README.md). Review its plan before applying; AWS Budgets alerts do not prevent charges.
 
 ## 7. Real-world use cases
 

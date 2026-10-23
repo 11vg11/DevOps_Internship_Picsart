@@ -34,6 +34,7 @@ A learning portfolio for DevOps, cloud infrastructure, and IT operations. The re
 | Providers and variables | [Providers and variables](./terraform/providers-variables.md) |
 | State and backends | [Terraform state and backends](./terraform/state-and-backend.md) |
 | Modules | [Terraform modules](./terraform/modules.md) |
+| Terraform beginner project | [AWS budget alerts](./terraform/budget-alerts/README.md) |
 | Existing coursework | [Lesson 1 — Core DevOps Concepts](./lesson-1-core-devops-concepts) |
 
 ## Repository structure
@@ -60,7 +61,13 @@ DevOps_Internship_Picsart/
     ├── imperative-vs-declarative.md
     ├── providers-variables.md
     ├── state-and-backend.md
-    └── modules.md
+    ├── modules.md
+    └── budget-alerts/
+        ├── README.md
+        ├── main.tf
+        ├── variables.tf
+        ├── .terraform.lock.hcl
+        └── terraform.example.tfvars
 ```
 
 ## Recommended learning order
@@ -69,7 +76,7 @@ DevOps_Internship_Picsart/
 2. Learn [SSH](./ssh/README.md), then [Docker](./docker/README.md).
 3. Study [CI/CD](./cicd/README.md) and [Kubernetes](./kubernetes/README.md).
 4. Learn [domains and DNS](./aws/domains-dns/README.md), then AWS [EC2](./aws/ec2/README.md), [VPC](./aws/vpc/README.md), [Security Groups](./aws/security-groups/README.md), and [IAM](./aws/iam/README.md).
-5. Study [IaC fundamentals](./terraform/iac-fundamentals.md), [Terraform](./terraform/README.md), and its guides on [providers and variables](./terraform/providers-variables.md), [state](./terraform/state-and-backend.md), and [modules](./terraform/modules.md).
+5. Study [IaC fundamentals](./terraform/iac-fundamentals.md), [Terraform](./terraform/README.md), and its guides on [providers and variables](./terraform/providers-variables.md), [state](./terraform/state-and-backend.md), and [modules](./terraform/modules.md). Then review the [AWS budget alerts project](./terraform/budget-alerts/README.md).
 
 ## Setup and prerequisites
 
@@ -84,7 +91,7 @@ Read the concepts first, then complete an exercise only in a disposable local en
 
 ## Practical project inventory
 
-The repository currently contains the [Lesson 1 assignment](./lesson-1-core-devops-concepts). No application project, Dockerfile, CI/CD workflow, Kubernetes manifest, or Terraform configuration was present during this documentation update. Add links here as practical projects are added; do not treat examples in the guides as completed projects.
+The repository contains the [Lesson 1 assignment](./lesson-1-core-devops-concepts) and a [Terraform project for AWS budget alerts](./terraform/budget-alerts/README.md). The Terraform project is a teaching template; it does not establish that the configuration has been applied to a live account.
 
 ## Security and cost
 
